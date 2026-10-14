@@ -1,0 +1,51 @@
+#!/bin/sh
+# Core owns DHCP and key-only SSH on the interface selected by the platform.
+set -eu
+[ -f /etc/pantavisor/network.conf ] || exit 2
+. /etc/pantavisor/network.conf
+SSH_PORT=${SSH_PORT:-2222}
+NETWORK_INTERFACE=${NETWORK_INTERFACE:-}
+mkdir -p /run/dropbear
+iface=
+attempt=0
+while [ -z "$iface" ] && [ "$attempt" -lt 40 ]; do
+    if [ -n "$NETWORK_INTERFACE" ]; then
+        case "$NETWORK_INTERFACE" in *[!a-zA-Z0-9_.:-]*) exit 2 ;; esac
+        [ ! -d "/sys/class/net/$NETWORK_INTERFACE" ] || iface=$NETWORK_INTERFACE
+    else
+        count=0
+        for path in /sys/class/net/*; do
+            [ -e "$path/device/driver" ] || continue
+            iface=${path##*/}; count=$((count + 1))
+        done
+        [ "$count" -le 1 ] || { echo 'AMBIGUOUS_NETWORK_INTERFACE: set NETWORK_INTERFACE'; exit 3; }
+    fi
+    if [ -z "$iface" ]; then sleep 1; attempt=$((attempt + 1)); fi
+done
+[ -n "$iface" ] || { echo 'ETHERNET_DEVICE_NOT_FOUND'; exit 3; }
+ip link set dev "$iface" down
+# An optional MAC override is provided by the platform, never inferred from a driver.
+if [ -n "${ETHERNET_MAC:-}" ]; then
+    ip link set dev "$iface" address "$ETHERNET_MAC"
+fi
+ip link set dev "$iface" up
+echo "ETHERNET_INTERFACE=$iface"
+echo "ETHERNET_MAC=$(cat "/sys/class/net/$iface/address")"
+/usr/sbin/dropbear -F -E -s -j -k -p "$SSH_PORT" \
+    -P /run/dropbear.pid -r /etc/dropbear/dropbear_ed25519_host_key &
+sshd=$!
+udhcpc -f -i "$iface" -t 6 -T 3 -A 10 \
+    -p /run/udhcpc.pid -s /usr/lib/pantavisor-core/udhcpc.script &
+dhcp=$!
+cleanup() {
+    kill "$sshd" "$dhcp" 2>/dev/null || true
+    wait "$sshd" 2>/dev/null || true
+    wait "$dhcp" 2>/dev/null || true
+    ip -4 addr flush dev "$iface" || true
+}
+trap cleanup EXIT
+trap 'exit 143' TERM INT
+echo "SSH_PORT=$SSH_PORT"
+while kill -0 "$sshd" 2>/dev/null && kill -0 "$dhcp" 2>/dev/null; do sleep 2; done
+echo 'NETWORK_PROCESS_EXITED'
+exit 1

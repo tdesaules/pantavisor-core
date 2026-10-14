@@ -1,0 +1,16 @@
+lxc.uts.name = pantavisor-core
+lxc.init.cmd = /usr/sbin/init.lxc.static --name core -- /usr/libexec/pantavisor/core-init
+lxc.signal.halt = SIGTERM
+lxc.rootfs.path = overlay:/volumes/core/root.squashfs:/volumes/core/lxc-overlay/upper
+lxc.mount.auto = proc:mixed sys:ro cgroup:ro:force
+lxc.autodev = 1
+lxc.tty.max = 0
+lxc.pty.max = 16
+lxc.console.path = none
+lxc.apparmor.profile = unconfined
+lxc.net.0.type = none
+lxc.cap.drop = sys_module sys_rawio sys_boot
+lxc.cgroup2.memory.max = ${memory_max}
+lxc.cgroup2.cpu.weight = ${cpu_weight}
+lxc.mount.entry = /volumes/core/data data none bind,create=dir 0 0
+lxc.mount.entry = ${control_source} run/platform none bind,create=dir 0 0

@@ -1,0 +1,35 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Construire Core avec ses outils d’administration
+    cmds:
+      - task: build
+
+  build:
+    desc: Construire Core avec KAS/Yocto
+    cmds:
+      - bash build/build.sh
+
+  package:
+    desc: Exporter le composant public Core
+    cmds:
+      - python3 build/package.py
+
+  oci:
+    desc: Construire l’image OCI à partir de l’export existant
+    vars:
+      COMPONENT_VERSION:
+        sh: cat VERSION
+    cmds:
+      - >-
+        podman build --platform linux/arm64 --ignorefile build/containerignore
+        -f build/Containerfile --build-arg VERSION={{.COMPONENT_VERSION | shellQuote}}
+        -t {{printf "localhost/pantavisor-core:%s" .COMPONENT_VERSION | shellQuote}}
+        dist/core
+
+  check:
+    desc: Exécuter les tests et vérifier la syntaxe du script de build
+    cmds:
+      - python3 -m unittest discover -s tests -v
+      - bash -n build/build.sh

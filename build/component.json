@@ -1,0 +1,8 @@
+{
+  "repository": "tdesaules/pantavisor-core",
+  "image": "pantavisor-core-image",
+  "machine": "userspace-arm64",
+  "name": "core",
+  "features": ["kubernetes-clients"],
+  "upstream": {"bash": "5.3.20", "kubectl": "1.36.4", "k0sctl": "0.33.1", "k9s": "0.51.0"}
+}

@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+[ -f /etc/pantavisor/core-release.json ] || exit 2
+case "${interface:-}" in ''|*[!a-zA-Z0-9_.:-]*) exit 2 ;; esac
+case "${1:-}" in
+    deconfig)
+        ip -4 addr flush dev "$interface"
+        rm -f /run/pantavisor-dhcp.state /data/dhcp.state
+        ;;
+    bound|renew)
+        ifconfig "$interface" "$ip" netmask "${subnet:-255.255.255.0}" up
+        gateway=${router:-}
+        gateway=${gateway%% *}
+        if [ -n "$gateway" ]; then
+            ip route replace default via "$gateway" dev "$interface"
+        fi
+        # /etc is the volatile initramfs or container overlay.
+        rm -f /etc/resolv.conf
+        for server in ${dns:-}; do printf 'nameserver %s\n' "$server"; done > /etc/resolv.conf
+        {
+            echo 'DHCP_BOUND=1'
+            echo "interface=$interface"
+            echo "address=$ip"
+            echo "subnet=${subnet:-}"
+            echo "gateway=$gateway"
+        } > /run/pantavisor-dhcp.state.tmp
+        mv /run/pantavisor-dhcp.state.tmp /run/pantavisor-dhcp.state
+        cp /run/pantavisor-dhcp.state /data/dhcp.state.tmp
+        mv /data/dhcp.state.tmp /data/dhcp.state
+        echo "[CORE] DHCP_BOUND: $interface $ip"
+        if [ -w /dev/kmsg ]; then
+            printf '<5>[CORE] DHCP_BOUND: %s %s\n' "$interface" "$ip" > /dev/kmsg
+        fi
+        ;;
+esac

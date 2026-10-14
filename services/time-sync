@@ -1,0 +1,30 @@
+#!/bin/sh
+# Core owns wall-clock synchronization; applications must not mint PKI at epoch zero.
+set -eu
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+[ ! -f /etc/pantavisor/time.conf ] || . /etc/pantavisor/time.conf
+NTP_SERVERS=${NTP_SERVERS:-"time.cloudflare.com pool.ntp.org"}
+set --
+for peer in $NTP_SERVERS; do set -- "$@" -p "$peer"; done
+TIME_STATUS_DIR=${TIME_STATUS_DIR:-/run/platform}
+if [ -d "$TIME_STATUS_DIR" ]; then rm -f "$TIME_STATUS_DIR/time-ready"; fi
+echo 'TIME_STATE=waiting-for-network' > /run/pantavisor-time.status
+until [ -f /run/pantavisor-dhcp.state ]; do sleep 1; done
+while :; do
+    echo 'TIME_STATE=synchronizing' > /run/pantavisor-time.status
+    if timeout 120 ntpd -n -q "$@"; then
+        now=$(date +%s)
+        if [ "$now" -ge 1735689600 ]; then
+            printf 'TIME_STATE=synchronized\nTIME_SYNC_EPOCH=%s\n' "$now" > /run/pantavisor-time.status
+            if [ -d "$TIME_STATUS_DIR" ]; then
+                printf '%s\n' "$now" > "$TIME_STATUS_DIR/time-ready.new"
+                mv "$TIME_STATUS_DIR/time-ready.new" "$TIME_STATUS_DIR/time-ready"
+            fi
+            cat /run/pantavisor-time.status
+            break
+        fi
+    fi
+    sleep 5
+done
+# Keep disciplining the clock after the initial step, without serving NTP.
+exec ntpd -n "$@"

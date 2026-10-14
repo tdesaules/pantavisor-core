@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "id": "pantavisor-core-v1",
+  "architecture": "arm64",
+  "provides": ["kubernetes-clients"],
+  "entrypoint": ["/usr/sbin/init.lxc.static", "--name", "core", "--", "/usr/libexec/pantavisor/core-init"],
+  "configuration": ["/etc/pantavisor/network.conf", "/etc/pantavisor/time.conf"],
+  "persistentTargets": ["/data"],
+  "sharedTargets": ["/run/platform"],
+  "requires": ["pantavisor-mgmt-api", "host-network", "cgroup-v2", "clock-control"],
+  "readiness": "Pantavisor READY after DHCP; time-ready is a separate signal",
+  "timeSignal": "/run/platform/time-ready"
+}

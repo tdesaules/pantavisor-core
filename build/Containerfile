@@ -1,0 +1,9 @@
+# Rootfs built independently by Yocto; no build toolchain is copied.
+FROM scratch AS runtime
+ARG VERSION
+ADD rootfs.tar.gz /
+USER 0:0
+ENTRYPOINT ["/usr/sbin/init.lxc.static", "--name", "core", "--", "/usr/libexec/pantavisor/core-init"]
+LABEL org.opencontainers.image.source="https://github.com/tdesaules/pantavisor-core" \
+      org.opencontainers.image.title="Pantavisor management core" \
+      org.opencontainers.image.version="$VERSION"
