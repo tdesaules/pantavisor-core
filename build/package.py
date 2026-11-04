@@ -8,8 +8,12 @@ import re
 import shutil
 import subprocess
 import tarfile
+import importlib.util
 
 ROOT = Path(__file__).resolve().parents[1]
+_spec = importlib.util.spec_from_file_location('core_provenance', ROOT / 'build/provenance.py')
+provenance = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(provenance)
 
 
 def digest(path):
@@ -23,6 +27,9 @@ def package(deploy, output):
     if not re.fullmatch(r'(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)', version):
         raise ValueError('VERSION must be a canonical release number')
     image = project['image'] + '-' + project['machine']
+    built = provenance.read(deploy, ROOT)
+    required = {image + '.' + suffix for suffix in ('squashfs', 'tar.gz', 'manifest', 'spdx.tar.zst', 'core-release.json')}
+    if not required <= set(built['files']): raise ValueError('Incomplete build provenance')
     # Inspect the actual public image tar, not a private rendered filesystem.
     with tarfile.open(deploy / (image + '.tar.gz')) as archive:
         for member in archive:
@@ -48,13 +55,13 @@ def package(deploy, output):
     for source, destination in (('runtime/contract.json', 'runtime.json'), ('runtime/lxc.conf.in', 'lxc.conf.in')):
         shutil.copyfile(ROOT / source, output / destination)
     shutil.copyfile(deploy / (image + '.core-release.json'), output / 'core-release.json')
+    shutil.copyfile(deploy / 'build-provenance.json', output / 'build-provenance.json')
     runtime = json.loads((output / 'runtime.json').read_text())
     metadata = {'schema': 2, 'kind': 'rootfs', 'name': project['name'], 'version': version,
         'architecture': runtime['architecture'], 'runtimeABI': runtime['id'], 'features': project['features'],
+        'requires': runtime['requires'], 'provides': runtime.get('provides', []),
         'upstream': project['upstream'], 'rootfsSha256': digest(output / 'rootfs.squashfs'),
-        'source': {'repository': project['repository'],
-                   'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-                   'dirty': bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT))},
+        'source': {'repository': project['repository'], **built['source']},
         'files': {p.name: {'sha256': digest(p), 'size': p.stat().st_size} for p in sorted(output.iterdir())}}
     (output / 'component.json').write_text(json.dumps(metadata, sort_keys=True, separators=(',', ':')) + '\n')
     print('sha256:' + digest(output / 'component.json'))

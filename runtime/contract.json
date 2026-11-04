@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "pantavisor-core-v1",
   "architecture": "arm64",
-  "provides": ["kubernetes-clients"],
+  "provides": ["kubernetes-clients", "synchronized-time"],
   "entrypoint": ["/usr/sbin/init.lxc.static", "--name", "core", "--", "/usr/libexec/pantavisor/core-init"],
   "configuration": ["/etc/pantavisor/network.conf", "/etc/pantavisor/time.conf"],
   "persistentTargets": ["/data"],
