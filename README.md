@@ -80,5 +80,9 @@ Projet neuf, versions réinitialisées ; aucune reprise d'historique Git.
 Le packaging exige les trois clients Kubernetes et leurs métadonnées de version.
 Les tests ARM64 exécutent Bash, kubectl, k0sctl et k9s sans condition de profil.
 Core est consommé par System dans les compositions base et k0s.
-La CI et la publication seront configurées séparément. Aucun accès carte n'est
-nécessaire pour les commandes ci-dessus.
+Les workflows `.github/workflows/` exécutent les contrôles rapides et proposent
+un build froid/publication manuel sur runner `pantavisor`. Voir
+[l'automatisation](docs/automation.md). Aucun accès carte n'est nécessaire.
+
+La [migration CI vers les Docker Actions](docs/ci-migration.md) décrit l'activation
+du nouveau workflow, les releases et les prérequis GitHub.

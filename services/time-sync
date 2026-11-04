@@ -2,6 +2,8 @@
 # Core owns wall-clock synchronization; applications must not mint PKI at epoch zero.
 set -eu
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+# Deployment configuration is mounted by System at runtime.
+# shellcheck source=/dev/null
 [ ! -f /etc/pantavisor/time.conf ] || . /etc/pantavisor/time.conf
 NTP_SERVERS=${NTP_SERVERS:-"time.cloudflare.com pool.ntp.org"}
 set --

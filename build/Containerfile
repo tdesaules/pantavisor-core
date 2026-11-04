@@ -2,6 +2,8 @@
 FROM scratch AS runtime
 ARG VERSION
 ADD rootfs.tar.gz /
+# DHCP and NTP require the privileged system-container runtime contract.
+# hadolint ignore=DL3002
 USER 0:0
 ENTRYPOINT ["/usr/sbin/init.lxc.static", "--name", "core", "--", "/usr/libexec/pantavisor/core-init"]
 LABEL org.opencontainers.image.source="https://github.com/tdesaules/pantavisor-core" \

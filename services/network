@@ -2,6 +2,8 @@
 # Core owns DHCP and key-only SSH on the interface selected by the platform.
 set -eu
 [ -f /etc/pantavisor/network.conf ] || exit 2
+# Deployment configuration is mounted by System at runtime.
+# shellcheck source=/dev/null
 . /etc/pantavisor/network.conf
 SSH_PORT=${SSH_PORT:-2222}
 NETWORK_INTERFACE=${NETWORK_INTERFACE:-}
@@ -37,6 +39,8 @@ sshd=$!
 udhcpc -f -i "$iface" -t 6 -T 3 -A 10 \
     -p /run/udhcpc.pid -s /usr/lib/pantavisor-core/udhcpc.script &
 dhcp=$!
+# Invoked indirectly by the EXIT trap below.
+# shellcheck disable=SC2329
 cleanup() {
     kill "$sshd" "$dhcp" 2>/dev/null || true
     wait "$sshd" 2>/dev/null || true

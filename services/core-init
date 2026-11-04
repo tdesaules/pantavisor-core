@@ -18,6 +18,8 @@ sync
 network=$!
 /usr/libexec/pantavisor/time-sync >> /data/time.log 2>&1 &
 clock=$!
+# Invoked indirectly by the EXIT trap below.
+# shellcheck disable=SC2329
 cleanup() {
     kill "$network" "$clock" 2>/dev/null || true
     wait "$network" 2>/dev/null || true
