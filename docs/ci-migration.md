@@ -40,13 +40,14 @@ explicitement, sans reconstruire ni remplacer la version publiée.
 
 ## Configuration GitHub
 
-Configurer `RELEASE_APP_ID` comme variable et `RELEASE_APP_PRIVATE_KEY` comme
+Configurer `BOT_APP_ID` comme variable et `BOT_APP_PRIVATE_KEY` comme
 secret, avec l'App installée sur ce dépôt et les droits de push nécessaires.
 L'accès est vérifié dès la préparation, avant le build long. Le token App permet
 au push du tag de déclencher un nouveau workflow.
 
-Configurer séparément `RENOVATE_TOKEN` pour le bot de maintenance et désactiver
-l'App Renovate hébergée si elle pilote déjà ce dépôt. `renovate.json` couvre les
+La maintenance génère aussi un token temporaire avec cette App, autorisée à écrire
+le contenu et les pull requests du dépôt. Aucun `RENOVATE_TOKEN` séparé n'est requis.
+Désactiver l'App Renovate hébergée si elle pilote déjà ce dépôt. `renovate.json` couvre les
 actions et Containerfiles ; les commits KAS et les versions/checksums couplés des
 recettes Yocto nécessitent une mise à jour coordonnée et une qualification.
 
