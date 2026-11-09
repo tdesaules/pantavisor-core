@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- fix(release): adopt catalogue 1.6.1 changelog generation (a84764d)
+
 ## 0.1.0
 
 - ci: use shared bot App for releases and Renovate (1597000)
