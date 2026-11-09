@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- fix(release): preserve annotated tags during publication checkout (9d0f052)
+
 ## 0.1.1
 
 - fix(release): adopt catalogue 1.6.1 changelog generation (a84764d)
