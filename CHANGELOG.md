@@ -8,4 +8,3 @@
 - feat(build): bind Core exports to verified provenance (522471f)
 - feat(core): add standalone management component (1eb6b28)
 - Initial commit (bdb2754)
-

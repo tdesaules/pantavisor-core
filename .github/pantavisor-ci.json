@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "project": "core",
-  "catalogueTag": "1.5.0",
-  "workflowSha256": "bb30054d28a6a9728efb6b6a51adf06589d3b7909f197d5eca23198c7ee01ba5"
+  "catalogueTag": "1.6.1",
+  "workflowSha256": "224e7f31a6ab8447647b7d04c2f239d5ecbd14ba4a6da55c74ebf4f3c6ed0579"
 }
